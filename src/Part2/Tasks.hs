@@ -12,18 +12,37 @@ data Term = IntConstant { intValue :: Int }          -- числовая кон�
 -- Для бинарных операций необходима не только реализация, но и адекватные
 -- ассоциативность и приоритет
 (|+|) :: Term -> Term -> Term
-(|+|) = notImplementedYet
+(|+|) = BinaryTerm Plus
+infixl 6 |+|
+
 (|-|) :: Term -> Term -> Term
-(|-|) = notImplementedYet
+(|-|) = BinaryTerm Minus
+infixl 6 |-|
+
 (|*|) :: Term -> Term -> Term
-(|*|) = notImplementedYet
+(|*|) = BinaryTerm Times
+infixl 7 |*|
 
 -- Заменить переменную `varName` на `replacement`
 -- во всём выражении `expression`
 replaceVar :: String -> Term -> Term -> Term
-replaceVar varName replacement expression = notImplementedYet
+replaceVar varName replacement expression = case expression of
+                                             IntConstant _ -> expression
+                                             BinaryTerm op lhv rhv ->
+                                                   let newLhv = replaceVar varName replacement lhv
+                                                       newRhv = replaceVar varName replacement rhv
+                                                   in BinaryTerm op newLhv newRhv
+                                             Variable name | name == varName -> replacement
+                                                           | otherwise       -> expression
 
 -- Посчитать значение выражения `Term`
 -- если оно состоит только из констант
 evaluate :: Term -> Term
-evaluate = notImplementedYet
+evaluate (IntConstant x) = IntConstant x
+evaluate (Variable var) = Variable var
+evaluate (BinaryTerm op lhv rhv) =
+  case (op, evaluate lhv, evaluate rhv) of
+    (Plus, IntConstant l, IntConstant r)  -> IntConstant (l + r)
+    (Minus, IntConstant l, IntConstant r) -> IntConstant (l - r)
+    (Times, IntConstant l, IntConstant r) -> IntConstant (l * r)
+    _ -> BinaryTerm op (evaluate lhv) (evaluate rhv)
